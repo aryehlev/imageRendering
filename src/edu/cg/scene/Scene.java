@@ -194,8 +194,33 @@ public class Scene {
 	}
 	
 	private Vec calcColor(Ray ray, int recursionLevel) {
-		// TODO: implement this method to support ray tracing
-		// 		This is the first call to ray ray-tracing
-		throw new UnimplementedMethodException("edu.cg.scene.Scene.calcColor");
+		if(recursionLevel > this.maxRecursionLevel){
+			return new Vec(0.0);
+		}else{
+			Hit closestHit = getClosestHit(ray);
+			Point closestHittingPoint = ray.getHittingPoint(closestHit);
+			Vec colour = getCurrentColour(closestHittingPoint);
+			Surface surfaceHit = closestHit.getSurface();
+			if (surfaceHit.isReflecting()){
+				Vec reflectedVector = getReflectionVector(ray, closestHit);
+
+				return Ops.add(calcColor(new Ray(closestHittingPoint, reflectedVector), recursionLevel + 1), colour);
+
+			}else{
+				return colour;
+			}
+
+			}
+		}
+
+	private Vec getReflectionVector(Ray ray, Hit closestHit) {
+		//return normalized reflected vector
+	}
+
+	private Hit getClosestHit(Ray ray) {
+	// loop all surfaces in scene and look for the closest hitting point from previous ray
+	}
+	private Vec getCurrentColour(Point point) {
+		//loop all light sources and culc colour of only not blocked sources
 	}
 }
