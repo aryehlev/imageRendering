@@ -185,26 +185,35 @@ public class Scene {
 
 			Ray ray = new Ray(camera.getCameraPosition(), pointOnScreen);
 			color = color.add(calcColor(ray, 0));
-
+//			System.out.println(color.toString());
 			return color.toColor();
 			// TODO: change this method for AntiAliasing bonus
 			//		You need to shoot antiAliasingFactor-1 additional rays through the pixel return the average color of
 			//      all rays.
 		});
 	}
-	
+
 	private Vec calcColor(Ray ray, int recursionLevel) {
 		if(recursionLevel > this.maxRecursionLevel){
-			return new Vec(0.0);
+			return new Vec(0.0, 0.0,0.0);
 		}else{
+//			System.out.println("hello");
 			Hit closestHit = getClosestHit(ray);
+			if (closestHit.getNormalToSurface() == null){
+				return this.backgroundColor;
+			}
 			Point closestHittingPoint = ray.getHittingPoint(closestHit);
-			Vec colour = getCurrentColour(closestHittingPoint);
 			Surface surfaceHit = closestHit.getSurface();
-			if (surfaceHit.isReflecting()){
+
+			Vec colour = this.ambient.mult(surfaceHit.Ka());
+
+			colour = Ops.add(colour, getCurrentColour(closestHittingPoint, closestHit, ray));
+			//add ambient colour
+//			System.out.println(colour.toString());
+			if (renderReflections && surfaceHit.isReflecting()){
 				Vec reflectedVector = getReflectionVector(ray, closestHit);
 
-				return Ops.add(calcColor(new Ray(closestHittingPoint, reflectedVector), recursionLevel + 1), colour);
+				return Ops.add(Ops.mult(surfaceHit.Kr(), calcColor(new Ray(closestHittingPoint, reflectedVector), recursionLevel + 1)), colour);
 
 			}else{
 				return colour;
@@ -214,13 +223,66 @@ public class Scene {
 		}
 
 	private Vec getReflectionVector(Ray ray, Hit closestHit) {
-		//return normalized reflected vector
+		return Ops.reflect(ray.direction(), closestHit.getNormalToSurface());
 	}
 
 	private Hit getClosestHit(Ray ray) {
-	// loop all surfaces in scene and look for the closest hitting point from previous ray
+		Hit closestHit = new Hit(Double.MAX_VALUE,null);
+		Hit currentHit = null;
+		for (Surface surface: surfaces) {
+			currentHit = surface.intersect(ray);
+			if(currentHit != null && currentHit.t() <= closestHit.t() && currentHit.t() > 0){
+				closestHit = currentHit;
+			}
+		}
+		return closestHit;
 	}
-	private Vec getCurrentColour(Point point) {
+
+	private Vec getCurrentColour(Point point, Hit currentHit, Ray prevRay) {
+		Vec colour = new Vec(0,0,0);
+		boolean isBlocked = false;
+		for (Light lightSource: lightSources) {
+			Ray rayToLight = lightSource.rayToLight(point);
+			isBlocked = checkIfBlocked(rayToLight, lightSource);
+			if(!isBlocked){
+
+				Vec diffuseColor = getDiffuseColor(currentHit,rayToLight);
+				Vec specularColor = getSpecularColor(currentHit,rayToLight,prevRay);
+				Vec currentColour = Ops.mult((Ops.add(diffuseColor, specularColor)), lightSource.intensity(point,rayToLight));
+				colour = Ops.add(colour, currentColour);
+			}
+		}
+		return colour;
 		//loop all light sources and culc colour of only not blocked sources
+	}
+
+	private Vec getDiffuseColor(Hit hit, Ray rayToLight) {
+		Vec kd = hit.getSurface().Kd();
+		Vec normalToSurface = hit.getNormalToSurface();
+		Vec rayToLightDirection = rayToLight.direction();
+		double innerProduct = normalToSurface.dot(rayToLightDirection);
+		return kd.mult(innerProduct);
+
+	}
+
+	private Vec getSpecularColor(Hit hit, Ray rayToLight, Ray prevRay) {
+		Vec ks = hit.getSurface().Ks();
+		Vec reflectedRay = getReflectionVector(rayToLight,hit);
+		Vec prevRayDirection = prevRay.direction();
+		double innerProduct = Math.pow(prevRayDirection.dot(reflectedRay), hit.getSurface().shininess());
+		return ks.mult(innerProduct);
+	}
+
+
+	private boolean checkIfBlocked(Ray rayToLight, Light lightSource) {
+		boolean isBlocked = false;
+		for (Surface surface:surfaces) {
+			if(lightSource.isOccludedBy(surface, rayToLight)){
+				isBlocked = true;
+				break;
+			}
+		}
+
+		return isBlocked;
 	}
 }

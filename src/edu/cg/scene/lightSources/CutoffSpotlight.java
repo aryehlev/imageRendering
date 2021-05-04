@@ -25,17 +25,17 @@ public class CutoffSpotlight extends PointLight {
 		this.direction = direction;
 		return this;
 	}
-	
+
 	public CutoffSpotlight initCutoffAngle(double cutoffAngle) {
 		this.cutoffAngle = cutoffAngle;
 		return this;
 	}
-	
+
 	@Override
 	public String toString() {
 		String endl = System.lineSeparator();
 		return "Spotlight: " + endl +
-				description() + 
+				description() +
 				"Direction: " + direction +
 				"Cutoof Angle:" + cutoffAngle + endl;
 	}
@@ -54,15 +54,24 @@ public class CutoffSpotlight extends PointLight {
 	public CutoffSpotlight initIntensity(Vec intensity) {
 		return (CutoffSpotlight)super.initIntensity(intensity);
 	}
-	
+
 	@Override
 	public boolean isOccludedBy(Surface surface, Ray rayToLight) {
 		return super.isOccludedBy(surface, rayToLight);
 	}
-	
+
 	@Override
 	public Vec intensity(Point hittingPoint, Ray rayToLight) {
-		// TODO Implement:
-		throw new UnimplementedMethodException("edu.cg.scene.lightSources.CutoffSpotlight.intensity()");
+		double dist = hittingPoint.dist(position);
+		double decay = kc + (kl + kq*dist)*dist;
+		Vec pointIntensity  = intensity.mult(1/decay);
+
+		double cosAngle = Ops.dot(rayToLight.direction().mult(-1), this.direction.normalize());
+		double angle = Math.toDegrees(Math.acos(cosAngle));
+		if(angle > this.cutoffAngle){
+			return new Vec (0,0,0);
+		}
+		return pointIntensity.mult(cosAngle);
 	}
+
 }

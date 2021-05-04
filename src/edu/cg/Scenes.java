@@ -7,10 +7,67 @@ import edu.cg.scene.camera.PinholeCamera;
 import edu.cg.scene.lightSources.CutoffSpotlight;
 import edu.cg.scene.lightSources.DirectionalLight;
 import edu.cg.scene.lightSources.Light;
+import edu.cg.scene.lightSources.PointLight;
 import edu.cg.scene.objects.*;
 
 
 public class Scenes {
+	public static Scene scene8() {
+// Create basic scene:
+		Scene scene = new Scene();
+
+		scene.initName("Scene8")
+				.initRenderReflections(true)
+				.initMaxRecursionLevel(4)
+				.initAmbient(new Vec(2));
+		// Camera settings:
+		PinholeCamera camera = new PinholeCamera(new Point(1.25, -8, 10), new Vec(0,1,-1),new Vec(0.0, 0, 1), 4);
+		scene.initCamera(camera);
+		// Light sources:
+		Light direcLight = new DirectionalLight().initDirection(new Vec(0, 0.5, -1.0)).initIntensity(new Vec(0.8));
+		scene.addLightSource(direcLight);
+
+		Light pointlightLeft = new PointLight().initPosition(new Point(-5, -5, 12)).
+				initIntensity(new Vec(.8));
+		scene.addLightSource(pointlightLeft);
+//		Light light3 = new CutoffSpotlight().initDirection(new Vec(0.0, 0.0, -1.0)).
+//				initIntensity(new Vec(.8)).
+//				initCutoffAngle(45).
+//				initPosition(new Point(2.0, 10.0, 10.0));
+//		scene.addLightSource(light3);
+//
+//		Light light4 = new CutoffSpotlight().initDirection(new Vec(0.0, 0.0, -1.0)).
+//				initIntensity(new Vec(.8)).
+//				initCutoffAngle(45).
+//				initPosition(new Point(0.0, 5.0, 10.0));
+//		scene.addLightSource(light4);
+
+		// Add plane to simulate ground
+		Shape planeShape = new Plain(0, 0.0, 1, 1);
+		Surface plainSurface = new Surface(planeShape, Materials.getWhitePlasticMaterial());
+		scene.addSurface(plainSurface);
+
+
+		double start = 0;
+		double startHeight = 0;
+		double endHeight = 2.5;
+		double end = 2.5;
+
+
+
+		while (start < 1.25 && end > 1.25){
+			AxisAlignedBox box = new AxisAlignedBox(new Point(start, start, startHeight),new Point(end, end, endHeight));
+			Surface boxSurface = new Surface(box, Materials.getBronzeMaterial());
+			scene.addSurface(boxSurface);
+			start += 0.1;
+			end -= 0.1;
+			startHeight = endHeight;
+			endHeight += 0.3;
+
+		}
+
+		return scene;
+	}
 
 	public static Scene scene1() {
 		Shape plainShape = new Plain(0, 0.0, 1, 2.5);

@@ -1,6 +1,7 @@
 package edu.cg.scene.lightSources;
 
 import edu.cg.UnimplementedMethodException;
+import edu.cg.algebra.Hit;
 import edu.cg.algebra.Point;
 import edu.cg.algebra.Ray;
 import edu.cg.algebra.Vec;
@@ -15,39 +16,37 @@ public class DirectionalLight extends Light {
 		this.direction = dirVec.normalize();
 		this.intensity = intensity;
 	}
-	
+
 	public DirectionalLight initDirection(Vec direction) {
 		this.direction = direction.normalize();
 		return this;
 	}
-	
+
 	@Override
 	public String toString() {
 		String endl = System.lineSeparator();
 		return "Directional Light:" + endl + super.toString() +
 				"Direction: " + direction + endl;
 	}
-	
+
 	@Override
 	public DirectionalLight initIntensity(Vec intensity) {
 		return (DirectionalLight)super.initIntensity(intensity);
 	}
-	
+
 	@Override
 	public Ray rayToLight(Point fromPoint) {
-		// TODO Implement:
-		throw new UnimplementedMethodException("edu.cg.scene.lightSources.DirectionalLight.rayToLight()");
+		return new Ray(fromPoint, direction.mult(-1));
 	}
 
 	@Override
 	public boolean isOccludedBy(Surface surface, Ray rayToLight) {
-		// TODO Implement:
-		throw new UnimplementedMethodException("edu.cg.scene.lightSources.DirectionalLight.isOccludedBy()");
+		Hit hit = surface.intersect(rayToLight);
+		return hit != null;
 	}
 
 	@Override
 	public Vec intensity(Point hittingPoint, Ray rayToLight) {
-		// TODO Implement:
-		throw new UnimplementedMethodException("edu.cg.scene.lightSources.DirectionalLight.intensity()");
+		return this.intensity;
 	}
 }
